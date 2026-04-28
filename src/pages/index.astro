@@ -1,0 +1,86 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolCard from '../components/ToolCard.astro';
+
+const tools = await getCollection('tools');
+
+// Featured first, then stable, then everything else; alphabetical within each group.
+const order: Record<string, number> = { stable: 1, beta: 2, experimental: 3, archived: 4 };
+const sorted = tools
+  .filter((t) => t.data.status !== 'archived')
+  .sort((a, b) => {
+    if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
+    const sa = order[a.data.status] ?? 9;
+    const sb = order[b.data.status] ?? 9;
+    if (sa !== sb) return sa - sb;
+    return a.data.name.localeCompare(b.data.name);
+  });
+
+const archived = tools.filter((t) => t.data.status === 'archived');
+---
+
+<BaseLayout
+  title="adrianwedd.dev — tools"
+  description="Installable tools by Adrian Wedd. MCP servers, CLIs, libraries — pip, clone, run."
+>
+  <header class="mb-12">
+    <h1 class="font-mono text-2xl text-text">adrianwedd.dev</h1>
+    <p class="mt-3 max-w-prose text-sm leading-relaxed text-text-muted">
+      Installable tools. MCP servers, CLIs, libraries — things other people can <code>pip install</code>,
+      <code>git clone</code>, or wire into Claude Code.
+    </p>
+    <p class="mt-2 max-w-prose text-sm leading-relaxed text-text-muted">
+      Writing lives at <a href="https://adrianwedd.com">adrianwedd.com</a>. Failure-First research at
+      <a href="https://failurefirst.org">failurefirst.org</a>. SPARK at
+      <a href="https://spark.wedd.au">spark.wedd.au</a>. This page is for things you install.
+    </p>
+  </header>
+
+  <section class="grid gap-4 sm:grid-cols-2">
+    {
+      sorted.map((tool) => (
+        <ToolCard
+          name={tool.data.name}
+          description={tool.data.description}
+          install={tool.data.install}
+          repo={tool.data.repo}
+          homepage={tool.data.homepage}
+          docs={tool.data.docs}
+          pkg={tool.data.pkg}
+          status={tool.data.status}
+          slug={tool.id.replace(/\.md$/, '')}
+          hasBody={(tool.body ?? '').trim().length > 0}
+        />
+      ))
+    }
+  </section>
+
+  {
+    archived.length > 0 && (
+      <section class="mt-16">
+        <h2 class="mb-4 font-mono text-sm uppercase tracking-wide text-text-muted">archived</h2>
+        <ul class="space-y-1 text-sm text-text-muted">
+          {archived.map((t) => (
+            <li>
+              <a href={t.data.repo} class="text-accent">
+                {t.data.name}
+              </a>{' '}
+              — {t.data.description}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  <footer class="mt-20 border-t border-border pt-6 text-xs text-text-muted">
+    <p>
+      <a href="/feed.json">feed.json</a> · <a href="https://github.com/adrianwedd">github</a> ·
+      <a href="https://adrianwedd.com">adrianwedd.com</a>
+    </p>
+    <p class="mt-2">
+      Curated, not exhaustive. If a tool isn't installable by a stranger, it doesn't appear here.
+    </p>
+  </footer>
+</BaseLayout>

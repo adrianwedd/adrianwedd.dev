@@ -1,0 +1,53 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const tools = await getCollection('tools');
+  // Only render per-tool pages where the markdown body has content.
+  return tools
+    .filter((t) => (t.body ?? '').trim().length > 0)
+    .map((t) => ({
+      params: { slug: t.id.replace(/\.md$/, '') },
+      props: { tool: t },
+    }));
+}
+
+const { tool } = Astro.props;
+const { Content } = await render(tool);
+---
+
+<BaseLayout title={`${tool.data.name} — adrianwedd.dev`} description={tool.data.description}>
+  <p class="mb-2 text-sm">
+    <a href="/" class="text-text-muted hover:text-accent">← all tools</a>
+  </p>
+
+  <header class="mb-8">
+    <h1 class="font-mono text-2xl text-text">{tool.data.name}</h1>
+    <p class="mt-2 text-sm text-text-muted">{tool.data.description}</p>
+  </header>
+
+  <section class="mb-8">
+    <h2 class="mb-2 font-mono text-sm uppercase tracking-wide text-text-muted">install</h2>
+    <div class="space-y-2">
+      {
+        tool.data.install.map((cmd) => (
+          <pre class="overflow-x-auto rounded bg-surface-alt px-4 py-3 text-sm"><code>$ {cmd}</code></pre>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="prose prose-invert mb-8 max-w-none text-text">
+    <Content />
+  </section>
+
+  <footer class="border-t border-border pt-4 text-xs text-text-muted">
+    <p class="flex flex-wrap gap-x-4">
+      <a href={tool.data.repo} class="text-accent">github</a>
+      {tool.data.pkg?.url && <a href={tool.data.pkg.url} class="text-accent">{tool.data.pkg.registry}</a>}
+      {tool.data.docs && <a href={tool.data.docs} class="text-accent">docs</a>}
+      {tool.data.homepage && <a href={tool.data.homepage} class="text-accent">site</a>}
+    </p>
+  </footer>
+</BaseLayout>

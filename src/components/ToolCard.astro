@@ -1,0 +1,50 @@
+---
+interface Props {
+  name: string;
+  description: string;
+  install: string[];
+  repo: string;
+  homepage?: string;
+  docs?: string;
+  pkg?: { registry: string; name: string; url?: string };
+  status: 'stable' | 'beta' | 'experimental' | 'archived';
+  slug: string;
+  hasBody: boolean;
+}
+
+const { name, description, install, repo, homepage, docs, pkg, status, slug, hasBody } = Astro.props;
+
+const statusStyles: Record<string, string> = {
+  stable: 'text-emerald-400',
+  beta: 'text-amber-400',
+  experimental: 'text-fuchsia-400',
+  archived: 'text-text-muted',
+};
+---
+
+<article class="rounded-lg border border-border bg-surface p-5">
+  <header class="mb-3 flex items-baseline justify-between gap-3">
+    <h2 class="font-mono text-lg text-text">
+      {hasBody ? <a href={`/${slug}/`}>{name}</a> : name}
+    </h2>
+    <span class={`text-xs font-mono ${statusStyles[status]}`}>{status}</span>
+  </header>
+
+  <p class="mb-4 text-sm leading-relaxed text-text-muted">{description}</p>
+
+  <div class="mb-4 space-y-1">
+    {
+      install.map((cmd) => (
+        <pre class="overflow-x-auto rounded bg-surface-alt px-3 py-2 text-xs"><code>$ {cmd}</code></pre>
+      ))
+    }
+  </div>
+
+  <footer class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-muted">
+    <a href={repo} class="text-accent">github</a>
+    {pkg?.url && <a href={pkg.url} class="text-accent">{pkg.registry}</a>}
+    {docs && <a href={docs} class="text-accent">docs</a>}
+    {homepage && <a href={homepage} class="text-accent">site</a>}
+    {hasBody && <a href={`/${slug}/`} class="text-accent">notes →</a>}
+  </footer>
+</article>
